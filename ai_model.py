@@ -27,8 +27,23 @@ def generate_dummy_data(n_samples=1000):
         'database_management', 'testing', 'linux', 'windows', 'troubleshooting',
         'aws', 'networking', 'product_management', 'unity', 'business_analysis',
         'digital_marketing', 'technical_writing', 'salesforce', 'docker', 'azure',
-        'bi_tools', 'systems_analysis', 'cloud_computing', 'cyber_security', 'devops'
-    ]
+        'bi_tools', 'systems_analysis', 'cloud_computing', 'cyber_security', 'devops',
+        'nodejs', 'express', 'mongodb', 'excel', 'tableau', 'tensorflow', 'docker',
+        'kubernetes', 'adobe_xd', 'figma', 'sketch', 'seo', 'sem', 'content_marketing',
+        'recruitment', 'onboarding', 'employee_relations', 'sales', 'negotiation', 'crm',
+        'photoshop', 'illustrator', 'indesign', 'writing', 'editing', 'financial_analysis',
+        'forecasting', 'network_security', 'penetration_testing', 'risk_management',
+        'pmp', 'agile', 'scrum', 'manual_testing', 'automation_testing', 'selenium',
+        'research', 'statistics', 'kotlin', 'swift', 'react_native', 'routing_switching',
+        'requirements_gathering', 'systems_design', 'deep_learning', 'game_design',
+        'logistics', 'supply_chain', 'project_management', 'healthcare_analysis',
+        'reporting', 'circuit_design', 'pcb', 'cad', 'solidworks', 'construction_management',
+        'autocad', 'sustainability', 'waste_management', 'process_engineering', 'chemistry',
+        'biomedical_engineering', 'medical_devices', 'gis', 'coordination', 'customer_service',
+        'communication', 'problem_solving', 'sourcing', 'interviewing', 'event_planning',
+        '3d_modeling'
+    ]   
+
     locations = [
         'New York', 'San Francisco', 'Remote', 'Chicago', 'Boston', 'Austin',
         'Seattle', 'Los Angeles', 'San Diego', 'Philadelphia', 'Dallas', 'Denver',
@@ -37,11 +52,14 @@ def generate_dummy_data(n_samples=1000):
         'St. Louis', 'Baltimore', 'Nashville', 'Kansas City', 'Columbus', 'Salt Lake City',
         'Portland', 'San Antonio', 'Sacramento', 'San Bernardino', 'Cincinnati',
         'Jacksonville', 'Tampa', 'Raleigh', 'Omaha', 'Louisville', 'Milwaukee',
-        'Birmingham', 'Tulsa', 'Memphis', 'Richmond', 'Buffalo'
+        'Birmingham', 'Tulsa', 'Memphis', 'Richmond', 'Buffalo',
+        'Phoenix', 'San Diego', 'Austin','Washington, D.C.'
     ]
+
     availabilities = [
-        'Immediately', '1-2 Weeks', '1 Month', 'Flexible', 'Not Available'
+        'Immediately', '1-2 Weeks', '1 Month', 'Flexible', 'Not Available', '2 Weeks'
     ]
+
 
     data = []
     for _ in range(n_samples):
@@ -113,9 +131,17 @@ def train_model(X, y):
 def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder, availability_encoder, scaler):
     matched_jobs = []
 
+    user_skills = set(user_profile['skills'].lower().split())
+
     for job in jobs:
-        # Check if the job experience meets the user's experience
-        if job['experience'] > user_profile['experience']:
+        # Relaxed experience check
+        if job['experience'] > user_profile['experience'] + 2:
+            continue
+
+        job_skills = set(job['skills'].lower().split())
+        skill_match_ratio = len(user_skills.intersection(job_skills)) / len(job_skills)
+
+        if skill_match_ratio < 0.3:  # Require at least 30% skill match
             continue
 
         combined_profile = {
@@ -136,13 +162,19 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
 
         features_scaled = scaler.transform(features)
         match_probability = model.predict_proba(features_scaled)[0][1]
-        if match_probability >= 0.80:
+        
+        # Only add jobs with match score above 70%
+        if match_probability > 0.7:
             matched_jobs.append({
                 "job": job,
-                "match_score": match_probability
+                "match_score": match_probability,
+                "skill_match_ratio": skill_match_ratio
             })
 
-    return matched_jobs
+    # Sort by match_score and skill_match_ratio
+    matched_jobs.sort(key=lambda x: (x['match_score'], x['skill_match_ratio']), reverse=True)
+    
+    return matched_jobs  # Return all matches above 70%
 
 @app.route('/api/train', methods=['GET'])
 def train():
@@ -252,7 +284,57 @@ def train():
         {"id": 97, "title": "Digital Marketing Specialist", "skills": "content_marketing seo google_ads", "experience": 3, "location": "New York", "salary": 95000, "availability": "1 Month"},
         {"id": 98, "title": "Data Scientist", "skills": "python machine_learning data_analysis", "experience": 5, "location": "Chicago", "salary": 155000, "availability": "Immediately"},
         {"id": 99, "title": "Technical Writer", "skills": "technical_documentation editing", "experience": 4, "location": "Austin", "salary": 102000, "availability": "Flexible"},
-        {"id": 100, "title": "Business Intelligence Analyst", "skills": "bi_tools data_analysis", "experience": 4, "location": "Philadelphia", "salary": 103000, "availability": "1-2 Weeks"}
+        {"id": 100, "title": "Business Intelligence Analyst", "skills": "bi_tools data_analysis", "experience": 4, "location": "Philadelphia", "salary": 103000, "availability": "1-2 Weeks"},
+        {"id": 101, "title": "Frontend Developer", "skills": "react javascript css", "experience": 0, "location": "San Francisco", "salary": 90000, "availability": "1 Month"},
+        {"id": 102, "title": "Backend Developer", "skills": "nodejs express mongodb", "experience": 0, "location": "New York", "salary": 95000, "availability": "2 Weeks"},
+        {"id": 103, "title": "Full Stack Developer", "skills": "react nodejs mongodb", "experience": 4, "location": "Seattle", "salary": 125000, "availability": "Immediately"},
+        {"id": 104, "title": "Data Analyst", "skills": "sql excel tableau", "experience": 0, "location": "Boston", "salary": 85000, "availability": "1 Month"},
+        {"id": 105, "title": "Machine Learning Engineer", "skills": "python machine_learning tensorflow", "experience": 3, "location": "Austin", "salary": 130000, "availability": "2 Weeks"},
+        {"id": 106, "title": "DevOps Engineer", "skills": "docker kubernetes aws", "experience": 2, "location": "Chicago", "salary": 115000, "availability": "1 Month"},
+        {"id": 107, "title": "Technical Support Engineer", "skills": "troubleshooting customer_service linux", "experience": 0, "location": "Denver", "salary": 60000, "availability": "Immediately"},
+        {"id": 108, "title": "UX/UI Designer", "skills": "adobe_xd figma sketch", "experience": 0, "location": "Los Angeles", "salary": 70000, "availability": "1 Month"},
+        {"id": 109, "title": "Product Manager", "skills": "product_management agile scrum", "experience": 5, "location": "San Diego", "salary": 140000, "availability": "2 Weeks"},
+        {"id": 110, "title": "Marketing Specialist", "skills": "seo sem content_marketing", "experience": 0, "location": "Miami", "salary": 55000, "availability": "Immediately"},
+        {"id": 111, "title": "HR Specialist", "skills": "recruitment onboarding employee_relations", "experience": 0, "location": "Atlanta", "salary": 50000, "availability": "1 Month"},
+        {"id": 112, "title": "Sales Representative", "skills": "sales negotiation crm", "experience": 0, "location": "Houston", "salary": 45000, "availability": "2 Weeks"},
+        {"id": 113, "title": "Graphic Designer", "skills": "photoshop illustrator indesign", "experience": 0, "location": "Phoenix", "salary": 60000, "availability": "Immediately"},
+        {"id": 114, "title": "Content Writer", "skills": "writing editing seo", "experience": 0, "location": "Philadelphia", "salary": 50000, "availability": "1 Month"},
+        {"id": 115, "title": "Financial Analyst", "skills": "financial_analysis excel forecasting", "experience": 2, "location": "Dallas", "salary": 95000, "availability": "2 Weeks"},
+        {"id": 116, "title": "Cybersecurity Analyst", "skills": "network_security penetration_testing risk_management", "experience": 3, "location": "San Jose", "salary": 120000, "availability": "1 Month"},
+        {"id": 117, "title": "Project Manager", "skills": "project_management pmp agile", "experience": 4, "location": "Austin", "salary": 110000, "availability": "Immediately"},
+        {"id": 118, "title": "Software Tester", "skills": "manual_testing automation_testing selenium", "experience": 0, "location": "New York", "salary": 70000, "availability": "2 Weeks"},
+        {"id": 119, "title": "IT Support Specialist", "skills": "troubleshooting hardware_software_support customer_service", "experience": 0, "location": "San Francisco", "salary": 55000, "availability": "Immediately"},
+        {"id": 120, "title": "Research Scientist", "skills": "research data_analysis statistics", "experience": 0, "location": "Washington, D.C.", "salary": 90000, "availability": "1 Month"},
+        {"id": 121, "title": "Web Developer", "skills": "html css javascript", "experience": 0, "location": "Boston", "salary": 80000, "availability": "2 Weeks"},
+        {"id": 122, "title": "Database Administrator", "skills": "sql database_management mysql", "experience": 2, "location": "Seattle", "salary": 105000, "availability": "1 Month"},
+        {"id": 123, "title": "Mobile App Developer", "skills": "kotlin swift react_native", "experience": 0, "location": "Los Angeles", "salary": 95000, "availability": "Immediately"},
+        {"id": 124, "title": "Network Engineer", "skills": "networking cisco routing_switching", "experience": 3, "location": "Chicago", "salary": 110000, "availability": "2 Weeks"},
+        {"id": 125, "title": "Business Analyst", "skills": "business_analysis requirements_gathering sql", "experience": 4, "location": "New York", "salary": 100000, "availability": "1 Month"},
+        {"id": 126, "title": "Systems Engineer", "skills": "systems_design devops aws", "experience": 0, "location": "Denver", "salary": 90000, "availability": "2 Weeks"},
+        {"id": 127, "title": "QA Engineer", "skills": "quality_assurance manual_testing automation_testing", "experience": 0, "location": "San Francisco", "salary": 85000, "availability": "1 Month"},
+        {"id": 128, "title": "AI Researcher", "skills": "machine_learning deep_learning python", "experience": 0, "location": "Boston", "salary": 95000, "availability": "Immediately"},
+        {"id": 129, "title": "Cloud Architect", "skills": "cloud_computing aws azure", "experience": 5, "location": "Austin", "salary": 145000, "availability": "1 Month"},
+        {"id": 130, "title": "Game Developer", "skills": "unity c# game_design", "experience": 0, "location": "San Diego", "salary": 80000, "availability": "2 Weeks"},
+        {"id": 131, "title": "IT Consultant", "skills": "it_consulting business_analysis project_management", "experience": 2, "location": "New York", "salary": 115000, "availability": "Immediately"},
+        {"id": 132, "title": "Operations Manager", "skills": "operations_management logistics supply_chain", "experience": 4, "location": "Los Angeles", "salary": 120000, "availability": "1 Month"},
+        {"id": 133, "title": "Digital Marketing Specialist", "skills": "digital_marketing seo ppc", "experience": 0, "location": "Miami", "salary": 65000, "availability": "2 Weeks"},
+        {"id": 134, "title": "Technical Writer", "skills": "technical_documentation writing editing", "experience": 0, "location": "Houston", "salary": 60000, "availability": "Immediately"},
+        {"id": 135, "title": "Social Media Manager", "skills": "social_media marketing content_creation", "experience": 0, "location": "San Francisco", "salary": 70000, "availability": "1 Month"},
+        {"id": 136, "title": "Healthcare Analyst", "skills": "healthcare_analysis data_analysis reporting", "experience": 0, "location": "Chicago", "salary": 75000, "availability": "2 Weeks"},
+        {"id": 137, "title": "Electrical Engineer", "skills": "electrical_engineering circuit_design pcb", "experience": 2, "location": "Phoenix", "salary": 105000, "availability": "1 Month"},
+        {"id": 138, "title": "Mechanical Engineer", "skills": "mechanical_engineering cad solidworks", "experience": 3, "location": "Philadelphia", "salary": 110000, "availability": "Immediately"},
+        {"id": 139, "title": "Civil Engineer", "skills": "civil_engineering construction_management autocad", "experience": 0, "location": "Dallas", "salary": 95000, "availability": "2 Weeks"},
+        {"id": 140, "title": "Environmental Engineer", "skills": "environmental_engineering sustainability waste_management", "experience": 0, "location": "San Diego", "salary": 90000, "availability": "1 Month"},
+        {"id": 141, "title": "Chemical Engineer", "skills": "chemical_engineering process_engineering chemistry", "experience": 2, "location": "Houston", "salary": 105000, "availability": "Immediately"},
+        {"id": 142, "title": "Biomedical Engineer", "skills": "biomedical_engineering medical_devices research", "experience": 0, "location": "San Francisco", "salary": 95000, "availability": "2 Weeks"},
+        {"id": 143, "title": "Architect", "skills": "architecture design autocad", "experience": 4, "location": "Seattle", "salary": 115000, "availability": "1 Month"},
+        {"id": 144, "title": "Interior Designer", "skills": "interior_design sketchup 3d_modeling", "experience": 0, "location": "Boston", "salary": 70000, "availability": "Immediately"},
+        {"id": 145, "title": "Urban Planner", "skills": "urban_planning gis project_management", "experience": 0, "location": "New York", "salary": 85000, "availability": "2 Weeks"},
+        {"id": 146, "title": "Logistics Coordinator", "skills": "logistics supply_chain management", "experience": 0, "location": "Los Angeles", "salary": 60000, "availability": "1 Month"},
+        {"id": 147, "title": "Supply Chain Analyst", "skills": "supply_chain data_analysis logistics", "experience": 2, "location": "Denver", "salary": 95000, "availability": "Immediately"},
+        {"id": 148, "title": "Event Planner", "skills": "event_planning coordination project_management", "experience": 0, "location": "Miami", "salary": 55000, "availability": "2 Weeks"},
+        {"id": 149, "title": "Customer Service Representative", "skills": "customer_service communication problem_solving", "experience": 0, "location": "Atlanta", "salary": 40000, "availability": "Immediately"},
+        {"id": 150, "title": "Technical Recruiter", "skills": "recruitment sourcing interviewing", "experience": 0, "location": "Austin", "salary": 50000, "availability": "1 Month"}
     ]
 
 

@@ -176,8 +176,7 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
     
     return matched_jobs  # Return all matches above 70%
 
-@app.route('/api/train', methods=['GET'])
-def train():
+def initialize_model():
     global model, vectorizer, location_encoder, availability_encoder, scaler, jobs
     df = generate_dummy_data()
     X, vectorizer, location_encoder, availability_encoder = prepare_features(df)
@@ -356,14 +355,11 @@ def train():
     # else:
     #     print("No jobs matched.")
 
-    return jsonify({"message": "Model trained successfully"})
+    print("Model trained successfully")
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
     global model, vectorizer, location_encoder, availability_encoder, scaler, jobs
-    
-    if model is None:
-        return jsonify({"error": "Model not trained. Please call /api/train first."})
     
     user_profile = request.json
     matched_jobs = predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder, availability_encoder, scaler)
@@ -373,4 +369,5 @@ def predict():
 
 
 if __name__ == "__main__":
+    initialize_model()
     app.run(debug=True)

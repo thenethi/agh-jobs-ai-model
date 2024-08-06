@@ -361,6 +361,9 @@ def initialize_model():
 def predict():
     global model, vectorizer, location_encoder, availability_encoder, scaler, jobs
     
+    if model is None or jobs is None:
+        initialize_model()
+
     user_profile = request.json
     matched_jobs = predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder, availability_encoder, scaler)
     

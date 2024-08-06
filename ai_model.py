@@ -132,6 +132,8 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
     matched_jobs = []
 
     user_skills = set(user_profile['skills'].lower().split())
+    user_locations = set(user_profile['location'].lower().split(','))
+    user_availabilities = set(user_profile['availability'].lower().split(','))
 
     for job in jobs:
         # Relaxed experience check
@@ -141,8 +143,13 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
         job_skills = set(job['skills'].lower().split())
         skill_match_ratio = len(user_skills.intersection(job_skills)) / len(job_skills)
 
-        if skill_match_ratio < 0.3:  # Require at least 30% skill match
+        # Adjust the skill match threshold
+        if skill_match_ratio < 0.2:  # Require at least 20% skill match
             continue
+
+        # Location and availability boost
+        location_boost = 1.2 if job['location'].lower() in user_locations else 1.0
+        availability_boost = 1.2 if job['availability'].lower() in user_availabilities else 1.0
 
         combined_profile = {
             'skills': user_profile['skills'] + ' ' + job['skills'],
@@ -163,8 +170,11 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
         features_scaled = scaler.transform(features)
         match_probability = model.predict_proba(features_scaled)[0][1]
         
-        # Only add jobs with match score above 70%
-        if match_probability > 0.7:
+        # Apply location and availability boosts to match probability
+        match_probability *= location_boost * availability_boost
+        
+        # Adjust the match threshold
+        if match_probability > 0.7:  # Lower the threshold to 50%
             matched_jobs.append({
                 "job": job,
                 "match_score": match_probability,
@@ -174,7 +184,7 @@ def predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder,
     # Sort by match_score and skill_match_ratio
     matched_jobs.sort(key=lambda x: (x['match_score'], x['skill_match_ratio']), reverse=True)
     
-    return matched_jobs  # Return all matches above 70%
+    return matched_jobs  # Return all matches above 50%
 
 def initialize_model():
     global model, vectorizer, location_encoder, availability_encoder, scaler, jobs
@@ -365,9 +375,17 @@ def predict():
         initialize_model()
 
     user_profile = request.json
+    
+    # Handle multiple locations and availabilities
+    if isinstance(user_profile['location'], list):
+        user_profile['location'] = ','.join(user_profile['location'])
+    if isinstance(user_profile['availability'], list):
+        user_profile['availability'] = ','.join(user_profile['availability'])
+    
     matched_jobs = predict_job_matches(user_profile, jobs, model, vectorizer, location_encoder, availability_encoder, scaler)
     
     return jsonify(matched_jobs)
+
 
 
 
